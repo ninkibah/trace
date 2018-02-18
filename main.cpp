@@ -3,18 +3,18 @@
 
 // Some functions that call one another
 int hitchhiker() {
-  Trace trace(__FILE__, __func__, __LINE__);
+  TRACE;
   Trace::printStackTrace(std::cout);
   return 42;
 }
 
 void f() {
-  Trace trace(__FILE__, __func__, __LINE__);
+  TRACE;
   hitchhiker();
 }
 
 int main() {
-  Trace trace(__FILE__, __func__, __LINE__);
+  TRACE;
   f();
   return 0;
 }
