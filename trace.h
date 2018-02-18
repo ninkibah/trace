@@ -5,11 +5,12 @@
 #ifndef TRACE_TRACE_H
 #define TRACE_TRACE_H
 #include <iostream>
+#include <thread>
 
 class Trace {
   static void* operator new(size_t); // Don't implement this, but making it private will prevent heap allocation
 
-  static inline Trace* mostRecentCaller = nullptr;
+  static thread_local inline Trace* mostRecentCaller = nullptr;
 
   Trace* caller;
   char const* file;
@@ -29,7 +30,7 @@ public:
   Trace& operator=(Trace&&) = delete;
 
   friend std::ostream& operator<<(std::ostream& os, Trace const& trace) {
-    os << trace.file << ":" << trace.line << " - " << trace.func;
+    os << "Thread(" << std::this_thread::get_id() << ") " << trace.file << ":" << trace.line << " - " << trace.func;
     return os;
   }
 
