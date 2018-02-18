@@ -2,8 +2,9 @@
 #include "trace.h"
 
 auto inc = [](int x) {
-  TRACE;
+  Trace trace(__FILE__, "inc(int) lambda", __LINE__);
   Trace::printStackTrace(std::cout);
+  throw 1;
   return x + 1;
 };
 
@@ -39,7 +40,11 @@ void f() {
 
 int main() {
   TRACE;
-  f();
-  Foo foo;
+  try {
+    f();
+    Foo foo;
+  } catch(...) {
+    std::cout << "Finished unwinding\n";
+  }
   return 0;
 }

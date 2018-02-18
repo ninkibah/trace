@@ -32,6 +32,9 @@ public:
   }
 
   ~Trace() {
+    if (std::uncaught_exceptions() > 0) {
+      std::cout << "Exception thrown: " << *this << "\n";
+    }
     mostRecentCaller = caller;
   }
 };
