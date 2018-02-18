@@ -7,6 +7,8 @@
 #include <iostream>
 
 class Trace {
+  static void* operator new(size_t); // Don't implement this, but making it private will prevent heap allocation
+
   static inline Trace* mostRecentCaller = nullptr;
 
   Trace* caller;
@@ -20,6 +22,11 @@ public:
   {
     mostRecentCaller = this;
   }
+
+  Trace(Trace const&) = delete;
+  Trace& operator=(Trace const&) = delete;
+  Trace(Trace&&) = delete;
+  Trace& operator=(Trace&&) = delete;
 
   friend std::ostream& operator<<(std::ostream& os, Trace const& trace) {
     os << trace.file << ":" << trace.line << " - " << trace.func;

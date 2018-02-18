@@ -40,6 +40,7 @@ void f() {
 
 int main() {
   TRACE;
+  //new Trace(__FILE__, __func__, __LINE__);
   try {
     f();
     Foo foo;
