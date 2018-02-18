@@ -36,5 +36,5 @@ public:
   }
 };
 
-#define TRACE Trace trace(__FILE__, __func__, __LINE__)
+#define TRACE Trace trace(__FILE__, __PRETTY_FUNCTION__, __LINE__)
 #endif //TRACE_TRACE_H
