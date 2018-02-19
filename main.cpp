@@ -2,48 +2,47 @@
 #include "trace.h"
 
 auto inc = [](int x) {
-  Trace trace(__FILE__, "inc(int) lambda", __LINE__);
-  Trace::printStackTrace(std::cout);
+  LoggedTrace trace(__FILE__, "inc(int) lambda", __LINE__, "x", x);
   throw 1;
   return x + 1;
 };
 
 auto dec = [](int x) {
-  TRACE;
+  TRACE(x);
   return x + 1;
 };
 
 template<typename T>
 T plus2(T x) {
-  TRACE;
+  TRACE(x);
   return x + 2;
 }
 // Some functions that call one another
 int hitchhiker() {
-  TRACE;
+  TRACE();
   plus2(3.0);
   plus2(4);
   return inc(42);
 }
 
 struct Foo {
-  Foo() {
-    TRACE;
-    Trace::printStackTrace(std::cout);
+  Foo(std::string const& s) {
+    TRACE(s);
   }
 };
 
 void f() {
-  TRACE;
+  TRACE();
   hitchhiker();
 }
 
 int main() {
-  TRACE;
-  //new Trace(__FILE__, __func__, __LINE__);
+  TRACE_TO(std::cerr);
+  TRACE();
   try {
+    Foo foo1("FUBAR");
+    Foo foo2("A very long string of characters which should be chopped in trace output");
     f();
-    Foo foo;
   } catch(...) {
     std::cout << "Finished unwinding\n";
   }
