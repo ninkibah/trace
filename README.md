@@ -3,19 +3,19 @@ A simple C++17 class for logging function entry and exit
 ## Tracing tools
 Sometimes gdb does not work on your code, but you still need to see what is happening.
 
-By using the TracePoint class, you can log what is happening in your code with
+By using the Trace class, you can log what is happening in your code with
 very little effort.
 
 The tracing library supports multi-threaded code using a thread local variable for the
-most recent tracepoint.
+most recent trace object.
 
 ### Installation
-You need to copy TracePoint.h and pp_magic.h to your projects include directory.
+You need to copy Trace.h and pp_magic.h to your project's include directory.
 The trace library is a header only library.
 
-In each source file, you want to trace, you will need to include TracePoint.h:
+In each source file, you want to trace, you will need to include Trace.h:
 ````
-#include "TracePoint.h"
+#include "Trace.h"
 ````
 
 ### Available macros
@@ -51,17 +51,11 @@ TRACE_TO(std::cerr);
 // Now all tracing output will go to cerr, instead of cout
 ````
 
-Finally, THROW_WITH_BACKTRACE(message) will create a TracePoint::Exception
-which contains both the message and a vector of TraceData objects.
-````
-THROW_WITH_BACKTRACE("Something bad happened")
-````
-
 ###Sample program
 This sample also shows how you can catch signals. This is very useful in difficult to debug areas.
 
 ````
-#include "TracePoint.h"
+#include "Trace.h"
 #include <iostream>
 #include <csignal>
 
