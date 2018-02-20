@@ -25,13 +25,13 @@ are created when throwing an exception. It will not produce any output.
 TRACE() will add the current scope to a backtrace, and it will also generate 2
 lines of output:
 ````
-Entering: /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int)
-Exiting: /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int)
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - void g(int)
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - void g(int)
 ````
 Often you may want to also trace one or more arguments. TRACE(x) generates:
 ````
-Entering: /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int) x => 3
-Exiting: /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int)
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - void g(int) x => 3
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - void g(int)
 ````
 If the argument is a string, then it will only show the first 10 characters of it.
 
@@ -55,57 +55,73 @@ TRACE_TO(std::cerr);
 This sample also shows how you can catch signals. This is very useful in difficult to debug areas.
 
 ````
-#include "Trace.h"
 #include <iostream>
-#include <csignal>
+#include "trace.h"
 
-using namespace std;
+auto inc = [](int x) {
+  LoggedTrace trace(__FILE__, "inc(int) lambda", __LINE__, "x", x);
+  throw 1;
+  return x + 1;
+};
 
-void signal_handler(int signal) {
-  INCLUDE_IN_BACKTRACE;
-  cout << "Thread(" << std::this_thread::get_id() << ") Caught signal " << signal << " - Stack trace follows:" << endl << TracePoint::backtrace();
-  // Note: You are not allowed to throw an exception from this function.
-}
-
-void foo() {
-  INCLUDE_IN_BACKTRACE;
-  //THROW_WITH_BACKTRACE("Woops something bad happened");
-  std::raise(SIGINT);
-}
-
-void bar(std::string s) {
-  TRACE(s);
-  foo();
-}
-
-void g(int x) {
+auto dec = [](int x) {
   TRACE(x);
-  TRACE_OUT(x + 2);
-  bar("abc-very long string");
+  return x + 1;
+};
+
+template<typename T>
+T plus2(T x) {
+  TRACE(x);
+  return x + 2;
+}
+// Some functions that call one another
+int hitchhiker() {
+  TRACE();
+  plus2(3.0);
+  plus2(4);
+  return inc(42);
+}
+
+struct Foo {
+  Foo(std::string const& s) {
+    TRACE(s);
+  }
+};
+
+void f() {
+  TRACE();
+  hitchhiker();
 }
 
 int main() {
-  INCLUDE_IN_BACKTRACE;
-  std::signal(SIGINT, signal_handler);
+  TRACE_TO(std::cerr);
+  TRACE();
   try {
-    g(3);
-  } catch(TracePoint::Exception& exc) {
-    cout << exc << endl;
+    Foo foo1("FUBAR");
+    Foo foo2("A very long string of characters which should be chopped in trace output");
+    f();
+  } catch(...) {
+    std::cout << "Finished unwinding\n";
   }
+  return 0;
 }
 ````
 
 Generates the following output:
 ````
-Thread(1) ==> /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int) x => 3
-Thread(1) x + 2 => 5
-Thread(1) ==> /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:25 - void bar(std::__cxx11::string) s => abc-very l...
-Thread(1) Caught signal 2 - Stack trace follows:
-/home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:11 - void signal_handler(int)
-/home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:16 - void foo()
-/home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:25 - void bar(std::__cxx11::string)
-/home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int)
-/home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:36 - int main()
-Thread(1) <== /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:25 - void bar(std::__cxx11::string)
-Thread(1) <== /home/joconnor/projects/cpp/internal/template_magic/tracepointtest.cpp:30 - void g(int)
+Finished unwinding
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:30 - Foo::Foo(const string&)
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:30 - Foo::Foo(const string&) s => A very lon...
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:30 - Foo::Foo(const string&)
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:35 - void f()
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:22 - int hitchhiker()
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - T plus2(T) [with T = double] x => 3
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - T plus2(T) [with T = double]
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - T plus2(T) [with T = int] x => 4
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:17 - T plus2(T) [with T = int]
+Thread(1) ==> /home/joconnor/projects/cpp/talks/trace/main.cpp:5 - inc(int) lambda x => 42
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:5 - inc(int) lambda
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:22 - int hitchhiker()
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:35 - void f()
+Thread(1) <== /home/joconnor/projects/cpp/talks/trace/main.cpp:41 - int main()
 ````
